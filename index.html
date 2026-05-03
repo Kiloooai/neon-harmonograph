@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Neon Harmonograph</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: #000;
+            overflow: hidden;
+            font-family: 'Courier New', monospace;
+            color: #0ff;
+            text-shadow: 0 0 5px #0ff;
+            cursor: crosshair;
+        }
+
+        canvas {
+            display: block;
+        }
+
+        .controls {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            background: rgba(0,0,0,0.7);
+            padding: 15px;
+            border-radius: 10px;
+            border: 1px solid rgba(0,255,255,0.3);
+            backdrop-filter: blur(5px);
+            z-index: 100;
+            user-select: none;
+            width: 240px;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        .controls::-webkit-scrollbar {
+            width: 6px;
+        }
+        .controls::-webkit-scrollbar-thumb {
+            background: #0ff;
+            border-radius: 3px;
+        }
+
+        .controls h2 {
+            margin-bottom: 12px;
+            font-size: 16px;
+            color: #f0f;
+            text-shadow: 0 0 10px #f0f;
+        }
+
+        .control-group {
+            margin-bottom: 12px;
+            border-bottom: 1px solid rgba(0,255,255,0.2);
+            padding-bottom: 10px;
+        }
+
+        .control-group:last-child {
+            border-bottom: none;
+        }
+
+        .group-title {
+            font-size: 12px;
+            color: #ff0;
+            margin-bottom: 8px;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .control-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 6px;
+            font-size: 10px;
+        }
+
+        .control-row label {
+            color: #aaa;
+            flex: 1;
+        }
+
+        .control-row input[type="range"] {
+            width: 100px;
+            accent-color: #0ff;
+        }
+
+        .value-display {
+            color: #fff;
+            font-weight: bold;
+            width: 40px;
+            text-align: right;
+            font-size: 10px;
+        }
+
+        .buttons {
+            display: flex;
+            gap: 8px;
+            margin-top: 10px;
+        }
+
+        button {
+            flex: 1;
+            padding: 8px;
+            background: transparent;
+            border: 1px solid #0ff;
+            color: #0ff;
+            border-radius: 5px;
+            cursor: pointer;
+            font-family: inherit;
+            font-size: 11px;
+            transition: all 0.2s;
+        }
+
+        button:hover {
+            background: rgba(0,255,255,0.1);
+            box-shadow: 0 0 10px rgba(0,255,255,0.3);
+        }
+
+        .stats {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            color: #0f0;
+            text-shadow: 0 0 8px #0f0;
+            font-size: 12px;
+            background: rgba(0,0,0,0.7);
+            padding: 10px;
+            border-radius: 8px;
+            border: 1px solid rgba(0,255,0,0.3);
+            pointer-events: none;
+        }
+
+        .instructions {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            color: #888;
+            font-size: 12px;
+            text-align: center;
+            max-width: 600px;
+            pointer-events: none;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="canvas"></canvas>
+
+    <div class="controls">
+        <h2>🌀 NEON HARMONOGRAPH</h2>
+
+        <div class="control-group">
+            <div class="group-title">Pendulum X (Horizontal)</div>
+            <div class="control-row">
+                <label>Frequency</label>
+                <input type="range" id="freqX" min="0.1" max="5" step="0.05" value="2.0">
+                <span class="value-display" id="freqXVal">2.0</span>
+            </div>
+            <div class="control-row">
+                <label>Amplitude</label>
+                <input type="range" id="ampX" min="10" max="300" value="150">
+                <span class="value-display" id="ampXVal">150</span>
+            </div>
+            <div class="control-row">
+                <label>Phase</label>
+                <input type="range" id="phaseX" min="0" max="6.28" step="0.1" value="0">
+                <span class="value-display" id="phaseXVal">0.0</span>
+            </div>
+            <div class="control-row">
+                <label>Damping</label>
+                <input type="range" id="dampX" min="0" max="0.1" step="0.001" value="0.002">
+                <span class="value-display" id="dampXVal">0.002</span>
+            </div>
+        </div>
+
+        <div class="control-group">
+            <div class="group-title">Pendulum Y (Vertical)</div>
+            <div class="control-row">
+                <label>Frequency</label>
+                <input type="range" id="freqY" min="0.1" max="5" step="0.05" value="3.0">
+                <span class="value-display" id="freqYVal">3.0</span>
+            </div>
+            <div class="control-row">
+                <label>Amplitude</label>
+                <input type="range" id="ampY" min="10" max="300" value="150">
+                <span class="value-display" id="ampYVal">150</span>
+            </div>
+            <div class="control-row">
+                <label>Phase</label>
+                <input type="range" id="phaseY" min="0" max="6.28" step="0.1" value="1.57">
+                <span class="value-display" id="phaseYVal">1.57</span>
+            </div>
+            <div class="control-row">
+                <label>Damping</label>
+                <input type="range" id="dampY" min="0" max="0.1" step="0.001" value="0.002">
+                <span class="value-display" id="dampYVal">0.002</span>
+            </div>
+        </div>
+
+        <div class="control-group">
+            <div class="group-title">Global</div>
+            <div class="control-row">
+                <label>Hue</label>
+                <input type="range" id="hue" min="0" max="360" value="180">
+                <span class="value-display" id="hueVal">180</span>
+            </div>
+            <div class="control-row">
+                <label>Trail Fade</label>
+                <input type="range" id="fade" min="0.01" max="0.2" step="0.01" value="0.04">
+                <span class="value-display" id="fadeVal">0.04</span>
+            </div>
+            <div class="control-row">
+                <label>Speed</label>
+                <input type="range" id="speed" min="0.5" max="3" step="0.1" value="1">
+                <span class="value-display" id="speedVal">1.0</span>
+            </div>
+        </div>
+
+        <div class="buttons">
+            <button id="clearBtn">Clear</button>
+            <button id="randomBtn">Random</button>
+        </div>
+    </div>
+
+    <div class="stats">
+        <div>Time: <span id="timer">0.0</span>s</div>
+        <div>FPS: <span id="fps">60</span></div>
+    </div>
+
+    <div class="instructions">
+        Adjust pendulum parameters to shape the evolving neon pattern • Lower damping = longer motion • Randomize for surprise • Click Clear to start fresh
+    </div>
+
+    <script>
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+
+        // Controls
+        const freqXSlider = document.getElementById('freqX');
+        const ampXSlider = document.getElementById('ampX');
+        const phaseXSlider = document.getElementById('phaseX');
+        const dampXSlider = document.getElementById('dampX');
+
+        const freqYSlider = document.getElementById('freqY');
+        const ampYSlider = document.getElementById('ampY');
+        const phaseYSlider = document.getElementById('phaseY');
+        const dampYSlider = document.getElementById('dampY');
+
+        const hueSlider = document.getElementById('hue');
+        const fadeSlider = document.getElementById('fade');
+        const speedSlider = document.getElementById('speed');
+
+        const clearBtn = document.getElementById('clearBtn');
+        const randomBtn = document.getElementById('randomBtn');
+
+        let width, height;
+        let t = 0;
+        let lastTime = 0;
+        let frameCount = 0;
+        let lastFpsTime = 0;
+        let prevX = null, prevY = null;
+
+        function resize() {
+            width = canvas.width = window.innerWidth;
+            height = canvas.height = window.innerHeight;
+            prevX = null; prevY = null; // reset drawing origin on resize
+        }
+        resize();
+        window.addEventListener('resize', resize);
+
+        function getParams() {
+            return {
+                freqX: parseFloat(freqXSlider.value),
+                ampX: parseFloat(ampXSlider.value),
+                phaseX: parseFloat(phaseXSlider.value),
+                dampX: parseFloat(dampXSlider.value),
+                freqY: parseFloat(freqYSlider.value),
+                ampY: parseFloat(ampYSlider.value),
+                phaseY: parseFloat(phaseYSlider.value),
+                dampY: parseFloat(dampYSlider.value),
+                hue: parseInt(hueSlider.value),
+                fade: parseFloat(fadeSlider.value),
+                speed: parseFloat(speedSlider.value)
+            };
+        }
+
+        function computePoint(p, t) {
+            const x = width/2 + p.ampX * Math.exp(-p.dampX * t) * Math.sin(p.freqX * t + p.phaseX);
+            const y = height/2 + p.ampY * Math.exp(-p.dampY * t) * Math.sin(p.freqY * t + p.phaseY);
+            return { x, y };
+        }
+
+        function drawSegment(x0, y0, x1, y1, hue, fade) {
+            ctx.beginPath();
+            ctx.moveTo(x0, y0);
+            ctx.lineTo(x1, y1);
+            ctx.strokeStyle = `hsl(${hue}, 100%, 60%)`;
+            ctx.lineWidth = 2;
+            ctx.shadowBlur = 15;
+            ctx.shadowColor = `hsl(${hue}, 100%, 60%)`;
+            ctx.stroke();
+            ctx.shadowBlur = 0;
+        }
+
+        function animate(timestamp) {
+            const delta = timestamp - lastTime || 16;
+            lastTime = timestamp;
+
+            frameCount++;
+            if (timestamp - lastFpsTime >= 1000) {
+                document.getElementById('fps').textContent = frameCount;
+                frameCount = 0;
+                lastFpsTime = timestamp;
+            }
+
+            const p = getParams();
+
+            // Fade background
+            ctx.fillStyle = `rgba(0, 0, 0, ${p.fade})`;
+            ctx.fillRect(0, 0, width, height);
+
+            // Advance time based on speed
+            t += delta * 0.001 * p.speed;
+
+            // Compute new point
+            const pt = computePoint(p, t);
+
+            // Draw segment from previous point
+            if (prevX !== null && prevY !== null) {
+                drawSegment(prevX, prevY, pt.x, pt.y, p.hue, p.fade);
+            }
+
+            prevX = pt.x;
+            prevY = pt.y;
+
+            document.getElementById('timer').textContent = t.toFixed(1);
+
+            requestAnimationFrame(animate);
+        }
+
+        // UI updates
+        function updateDisplays() {
+            document.getElementById('freqXVal').textContent = freqXSlider.value;
+            document.getElementById('ampXVal').textContent = ampXSlider.value;
+            document.getElementById('phaseXVal').textContent = parseFloat(phaseXSlider.value).toFixed(2);
+            document.getElementById('dampXVal').textContent = dampXSlider.value;
+
+            document.getElementById('freqYVal').textContent = freqYSlider.value;
+            document.getElementById('ampYVal').textContent = ampYSlider.value;
+            document.getElementById('phaseYVal').textContent = parseFloat(phaseYSlider.value).toFixed(2);
+            document.getElementById('dampYVal').textContent = dampYSlider.value;
+
+            document.getElementById('hueVal').textContent = hueSlider.value;
+            document.getElementById('fadeVal').textContent = fadeSlider.value;
+            document.getElementById('speedVal').textContent = speedSlider.value;
+        }
+
+        const allSliders = [freqXSlider, ampXSlider, phaseXSlider, dampXSlider,
+                           freqYSlider, ampYSlider, phaseYSlider, dampYSlider,
+                           hueSlider, fadeSlider, speedSlider];
+        allSliders.forEach(s => s.addEventListener('input', updateDisplays));
+
+        clearBtn.addEventListener('click', () => {
+            ctx.fillStyle = '#000';
+            ctx.fillRect(0, 0, width, height);
+            t = 0;
+            prevX = null;
+            prevY = null;
+        });
+
+        randomBtn.addEventListener('click', () => {
+            freqXSlider.value = (0.5 + Math.random() * 4).toFixed(2);
+            ampXSlider.value = Math.floor(50 + Math.random() * 200);
+            phaseXSlider.value = (Math.random() * 6.28).toFixed(2);
+            dampXSlider.value = (Math.random() * 0.05).toFixed(3);
+
+            freqYSlider.value = (0.5 + Math.random() * 4).toFixed(2);
+            ampYSlider.value = Math.floor(50 + Math.random() * 200);
+            phaseYSlider.value = (Math.random() * 6.28).toFixed(2);
+            dampYSlider.value = (Math.random() * 0.05).toFixed(3);
+
+            hueSlider.value = Math.floor(Math.random() * 360);
+            // Keep fade and speed as is maybe? Or randomize too:
+            // fadeSlider.value = (0.02 + Math.random() * 0.15).toFixed(2);
+            // speedSlider.value = (0.5 + Math.random() * 2).toFixed(1);
+
+            updateDisplays();
+            // Also clear to start fresh
+            ctx.fillStyle = '#000';
+            ctx.fillRect(0, 0, width, height);
+            t = 0;
+            prevX = null;
+            prevY = null;
+        });
+
+        updateDisplays();
+        animate(0);
+    </script>
+</body>
+</html>
